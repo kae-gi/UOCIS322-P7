@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <title>Results!</title>
+        <style>
+        th, td {
+          border: 1px solid black;
+          padding: 5px;
+        }
+        </style>
+    </head>
+    <body>
+      <div class="row">
+         <div class="col-md-12">
+            <table class="control_time_table">
+               <caption>ACP Controle Times for Brevet Distance: {{ brevet_distance_km[0].distance }} km</caption>
+               <tr>
+                  <th>Miles</th>
+                  <th>Km</th>
+                  <th>Location</th>
+                  <th>Open</th>
+                  <th>Close</th>
+               </tr>
+               {% for row in km_list %}
+               <tr class="control">
+                  <!-- Dist (mi) -->
+                  <td ><p>{{ row.miles }}</p></td>
+                  <!-- Dist (km) -->
+                  <td><p>{{ row.km }}</p></td>
+                  <!-- Location (optional) -->
+                  <td><p>{{ row.location }}</p></td>
+                  <!-- Open time -->
+                  <td><p>{{ row.open }}</p></td>
+                  <!-- Close time -->
+                  <td><p>{{ row.close }}</p></td>
+               </tr>
+               {% endfor %}
+            </table>
+         </div>
+      </div>
+    </body>
+</html>
