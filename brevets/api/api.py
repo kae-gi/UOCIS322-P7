@@ -1,11 +1,8 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort,session
 from flask_restful import Resource, Api
-from flask import Flask, request, render_template, redirect, url_for, flash, abort
 from pymongo import MongoClient
 from bson import json_util
 import json,os
-import logging
-#import config
 
 from passlib.hash import sha256_crypt as pwd_context
 from passlib.apps import custom_app_context as pwd_context
@@ -80,7 +77,7 @@ def formCSV(data):
 class listAll(Resource):
     def get(self, dtype=""):
         token = request.args.get('token', type=str)
-        if not verify_auth_token():
+        if not verify_auth_token(token):
             return abort(401, description="Could not authorize.")
         else:
             top = int(request.args.get('top',default=-1)) # default is show all
@@ -97,7 +94,7 @@ class listAll(Resource):
 class listOpenOnly(Resource):
     def get(self, dtype=""):
         token = request.args.get('token', type=str)
-        if not verify_auth_token():
+        if not verify_auth_token(token):
             return abort(401, description="Could not authorize.")
         else:
             times = dict()
@@ -117,7 +114,7 @@ class listOpenOnly(Resource):
 class listCloseOnly(Resource):
     def get(self, dtype=""):
         token = request.args.get('token', type=str)
-        if not verify_auth_token():
+        if not verify_auth_token(token):
             return abort(401, description="Could not authorize.")
         else:
             times = dict()
@@ -143,7 +140,7 @@ class Register(Resource):
         user = db_u.usertable.find_one({'username':username})
         if user == None:
             db_u.usertable.insert({'id':db_u.usertable.find().count()+1, 'username':username, 'password':password})
-            return password, 201
+            return "Registered", 201
         else:
             return abort(400, description="User exists already")
 
@@ -158,7 +155,6 @@ class Token(Resource):
         if user == None:
             return abort(401, "Unauthorized: user does not exist")
         # password & hash do not match
-        #if not verify_password(user['password'], hash_p):
         if not verify_password(password, user['password']):
             return abort(401, "Unauthorized: Password is incorrect")
 
@@ -167,7 +163,6 @@ class Token(Resource):
         auth_token = generate_auth_token(id, expiration)
         user_token = {'id': user['id'], 'token':str(auth_token)[2:-1], 'duration': expiration}
         return jsonify(user_token)
-
 
 
 # Create routes

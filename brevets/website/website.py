@@ -68,12 +68,12 @@ login_manager.needs_refresh_message_category = "info"
 
 @login_manager.user_loader
 def load_user(user_id):
-    username = session['username']
-    if username == None:
-        return None
-    else:
+    if 'username' in session:
+        username = session['username']
         token = session['token']
         return User(user_id, username).set_token(token)
+    else:
+        return None
 
 login_manager.init_app(app)
 #===============================================================================
@@ -92,16 +92,13 @@ def register():
         password = pwd_context.encrypt(password)
         url = 'http://restapi:5000/register'
         post_request = requests.post(url, data={"username": username, "password": password})
-        # if not ok or not created
+        # if not created
         if post_request.status_code != 201:
             flash("Registration failed")
-            #flash(post_request.json()['message'])
-            flash(post_request.status_code)
-            flash(post_request.text)
-            # flash(username)
+            # flash(post_request.status_code)
+            # flash(post_request.text)
         else:
             flash("Successfully registered.")
-            flash(post_request.text)
             return redirect(url_for('login'))
     return render_template("register.html", form=form)
 
@@ -111,17 +108,11 @@ def login():
     if form.validate_on_submit() and request.method == "POST" and "username" in request.form:
         username = request.form["username"]
         password = request.form["password"]
-
-        #password = pwd_context.encrypt(password)
         url = "http://restapi:5000/token"
         get_request = requests.get(url, data={"username": username, "password": password})
-
-        #url = "http://restapi:5000/token?username="+username+"&password="+password
-        #get_request = requests.get(url)
         if get_request.status_code != 401:
             remember = request.form.get("remember", "false") == "true"
             gr_json = get_request.json()
-            #gr_json = json.loads(get_request.json())
             user = User(int(gr_json['id']), username).set_token(gr_json['token'])
             if login_user(user, remember=remember):
                 session['username'] = username
@@ -135,8 +126,8 @@ def login():
             else:
                 flash("Sorry, but you could not log in.")
         else:
-            flash(get_request.status_code)
-            flash(get_request.text)
+            # flash(get_request.status_code)
+            # flash(get_request.text)
             flash(u"Invalid username or password.")
     return render_template("login.html", form=form)
 
@@ -157,6 +148,7 @@ def secret():
 @login_required
 def output():
     token = current_user.token
+
     url = 'http://restapi:5000'
     if request.args.get('top', type=int):
         top = request.args.get('top', type=int)
@@ -176,10 +168,12 @@ def output():
         url += '/csv'
     else:
         url += '/json'
+    # get token
+    url += '?token=' + token
     # get top k to display
     if top > 0:
-        url += '?top=' + str(top)
-    url += '&token=' + token
+        url += '&top=' + str(top)
+
     data = requests.get(url).text
     return data
 
